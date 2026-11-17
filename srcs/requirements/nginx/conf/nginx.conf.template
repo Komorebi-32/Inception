@@ -1,0 +1,93 @@
+# Main NGINX configuration (replaces Debian's /etc/nginx/nginx.conf entirely,
+# so Debian's default site in sites-enabled/ is never loaded).
+# Syntax: `directive value;` and `block { ... }`. Every directive ends with ";".
+# The ${UPPERCASE} variables are filled in by envsubst at container start. NGINX's own variables ($uri, $args...) are left untouched.
+
+# The worker processes (the ones handling requests) run as www-data, not root.
+user www-data;
+# One worker per CPU core.
+worker_processes auto;
+# File where the master process writes its PID.
+pid /run/nginx.pid;
+# Errors go to the container's stderr -> visible with `docker logs nginx`.
+error_log /dev/stderr;
+
+events {
+    # Max simultaneous connections per worker. 1024 is the usual default.
+    worker_connections 1024;
+}
+
+http {
+    # Maps file extensions to Content-Type headers (.css -> text/css...),
+    # otherwise the browser would not apply stylesheets or run scripts.
+    include /etc/nginx/mime.types;
+    # Content-Type for unknown extensions: "binary file, download it".
+    default_type application/octet-stream;
+    # One log line per request, on stdout -> `docker logs nginx`.
+    access_log /dev/stdout;
+    # Do not reveal the NGINX version in headers and error pages.
+    server_tokens off;
+
+    # One "virtual server" = one site. There is NO `listen 80` anywhere:
+    # plain HTTP is simply not served (and port 80 is not published either).
+    server {
+        # Accept TLS connections on the HTTPS port, IPv4 and IPv6 ([::]).
+        listen ${NGINX_PORT} ssl;
+        listen [::]:${NGINX_PORT} ssl;
+        # Answer for this domain name (must match the certificate's name).
+        server_name ${DOMAIN_NAME};
+
+        # TLS: only versions 1.2 and 1.3 (subject rule). 1.0/1.1 are refused.
+        ssl_protocols TLSv1.2 TLSv1.3;
+        # Certificate (public) and private key, created by the entrypoint.
+        ssl_certificate     /etc/nginx/ssl/inception.crt;
+        ssl_certificate_key /etc/nginx/ssl/inception.key;
+
+        # Folder served as the website: the WordPress volume, shared read-only
+        # with this container. NGINX serves static files (images, CSS, JS)
+        # itself and passes only .php files to php-fpm.
+        root /var/www/html;
+        # File to serve when a folder is requested ("/" -> "/index.php").
+        index index.php index.html;
+
+        # Every request that matches no more specific location below.
+        location / {
+            # Try, in order: the exact file, the folder, otherwise hand the
+            # request to WordPress's index.php, which handles "pretty" URLs
+            # like /2026/11/hello-world/ that are not real files.
+            # $args = the query string (?p=1...), kept intact.
+            try_files $uri $uri/ /index.php?$args;
+        }
+
+        # Requests for .php files (`~` = regular expression; \. = a literal dot;
+        # $ = end of the path).
+        location ~ \.php$ {
+            # Security: only pass files that really exist. Otherwise, a request
+            # like /uploads/image.jpg/x.php could make PHP execute an uploaded
+            # file. Non-existent ones get 404.
+            try_files $uri =404;
+            # Standard FastCGI variables (request method, query string...),
+            # shipped with NGINX.
+            include fastcgi_params;
+            # Send the request over FastCGI to php-fpm in the `wordpress`
+            # container. "wordpress" is resolved by Docker's internal DNS:
+            # on a user-defined network, service names are host names.
+            fastcgi_pass wordpress:${WP_PORT};
+            # Absolute path of the script php-fpm must run. Works because both
+            # containers mount the same volume at the same path /var/www/html.
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            # Host name PHP sees. Debian's fastcgi_params sends `$host`, which
+            # has NO port: on a non-443 port WordPress would see
+            # "login.42.fr", compare it with its URL "login.42.fr:8443" and
+            # redirect forever. `$http_host` (what the client typed) would work
+            # but is untrusted input, so we send a fixed value computed by the
+            # entrypoint. Declared after the include, so this one wins.
+            fastcgi_param HTTP_HOST ${SITE_HOST};
+        }
+
+        # Never serve hidden files (.htaccess, .git, .env...).
+        location ~ /\. {
+            deny all;
+        }
+    }
+}

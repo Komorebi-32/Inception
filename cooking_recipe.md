@@ -1077,8 +1077,28 @@ Must build through compose and create the folders, secrets and `.env` it needs, 
 # Reminder: recipe lines (the indented commands) MUST start with a real TAB.
 # A leading `@` hides the command itself and prints only its output.
 
-# Your 42 login. Can be overridden: `make LOGIN=jdoe`.
-LOGIN    := <login>
+# Your 42 login. Default: the Unix user running make, because on the VM your
+# user IS your 42 login. Override it with `make LOGIN=jdoe`.
+#   ?=               set it only if it was not given already (command line or
+#                    environment variable)
+#   $(shell whoami)  run the `whoami` command and use what it prints
+LOGIN    ?= $(shell whoami)
+# Refuse to go on with a login that is not a plain lowercase name: `root`
+# (someone ran `sudo make`), or a placeholder such as "<login>", which the
+# shell would read as redirections in `rm -rf /home/<login>/data`.
+#   $(shell ... | grep -Ex ...)  prints the login back only if the whole of it
+#                                (-x) matches the pattern (-E: extended regex)
+#   ifeq (a,b) / ifneq (a,b)     true when a and b are equal / differ
+#   $(error ...)                 stop make immediately with this message
+ifeq ($(strip $(LOGIN)),)
+$(error LOGIN is empty. Run: make LOGIN=<your 42 login>)
+endif
+ifneq ($(shell printf '%s' '$(LOGIN)' | grep -Ex '[a-z][a-z0-9_-]*'),$(LOGIN))
+$(error Invalid LOGIN "$(LOGIN)". Run: make LOGIN=<your 42 login>)
+endif
+ifeq ($(LOGIN),root)
+$(error Do not run make as root (no sudo), or pass LOGIN=<your 42 login>)
+endif
 DOMAIN   := $(LOGIN).42.fr
 DATA_DIR := /home/$(LOGIN)/data
 # -f: path of the compose file, since it is not in the current folder.
@@ -1123,10 +1143,11 @@ secrets:
 	@[ -s secrets/credentials.txt ]      || { openssl rand -hex 12; openssl rand -hex 12; } > secrets/credentials.txt
 	@chmod 600 secrets/*.txt
 
-# Create srcs/.env from the committed template if it does not exist yet,
-# replacing every "<login>" with $(LOGIN) (sed: s/old/new/g = replace all).
+# Create srcs/.env from the committed template if it does not exist yet (or is
+# empty), replacing every "<login>" with $(LOGIN) (sed: s/old/new/g = replace
+# all). An existing, filled .env is never overwritten: your edits are kept.
 env:
-	@[ -f srcs/.env ] || sed 's/<login>/$(LOGIN)/g' srcs/.env.example > srcs/.env
+	@[ -s srcs/.env ] || sed 's/<login>/$(LOGIN)/g' srcs/.env.example > srcs/.env
 
 # Host folders backing the two named volumes (they must exist before `up`).
 # -p: create parents too, no error if they already exist.
@@ -1134,10 +1155,11 @@ dirs:
 	@mkdir -p $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 
 # Make <login>.42.fr point to this machine, only if the line is missing.
-#   grep -q     quiet: only the exit status matters (found / not found)
+#   grep -qw    quiet (-q: only the exit status matters, found / not found),
+#               whole word (-w: "xjdoe.42.fr" does not count as "jdoe.42.fr")
 #   sudo tee -a append as root (a plain `>>` would run without sudo rights)
 hosts:
-	@grep -q "$(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null
+	@grep -qw "$(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null
 
 # Remove the containers, the network AND the images built by this project.
 clean:
@@ -1149,7 +1171,7 @@ clean:
 # (mysql, www-data). Secrets and srcs/.env are kept.
 fclean:
 	$(COMPOSE) down -v --rmi all
-	@[ -n "$(DATA_DIR)" ] && [ "$(DATA_DIR)" != "/" ] && sudo rm -rf $(DATA_DIR)
+	@[ -n "$(DATA_DIR)" ] && [ "$(DATA_DIR)" != "/" ] && sudo rm -rf "$(DATA_DIR)"
 	docker system prune -af
 
 # Full rebuild from a clean slate.
@@ -1159,6 +1181,8 @@ re: fclean all
 # called "clean" or "secrets" exists. (`secrets` IS a folder, so this matters.)
 .PHONY: all up down stop start logs ps secrets env dirs hosts clean fclean re
 ```
+`LOGIN` defaults to your Unix user (`whoami`): on the VM your user is your 42 login. The Makefile stops with an error if the login is empty, `root` or not a plain lowercase name, so a placeholder like `<login>` can never reach `sudo rm -rf` (the shell would read `<login>` as redirections). `make env` also refills an *empty* `srcs/.env` (`-s` test).
+
 Mind: recipes need real TABs (check with `cat -A Makefile`: TABs show as `^I`). `make fclean` asks for sudo because files written by the containers belong to other users (mysql, www-data).
 
 ---

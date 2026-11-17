@@ -1,0 +1,8 @@
+# [mysqld] = the section read by the server (mariadbd). Other sections such as
+# [client] are read by the command-line tools instead.
+[mysqld]
+# Listen on every network interface of the container. The default
+# (127.0.0.1, set by Debian's 50-server.cnf) would accept connections only
+# from inside this container, so WordPress could never reach the database.
+# Safe here: port 3306 is not published, only the Docker network can reach it.
+bind-address = 0.0.0.0

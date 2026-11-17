@@ -1,0 +1,141 @@
+# Compose file: describes the whole stack (3 services, 1 network, 2 volumes,
+# 3 secrets) so that one command builds and starts everything.
+# No `version:` key: it is obsolete with Compose v2 (`docker compose`).
+
+# Project name, used as a prefix for resources Docker names automatically.
+# Without it, compose uses the folder name ("srcs").
+name: inception
+
+services:
+  mariadb:
+    # Build the image from the Dockerfile in this folder (nothing is pulled
+    # from Docker Hub except the debian:bookworm base).
+    build: ./requirements/mariadb
+    # Name (and tag) of the image built above: same name as the service, as
+    # the subject requires. An explicit tag avoids the implicit `:latest`.
+    image: mariadb:inception
+    # Fixed container name (otherwise "inception-mariadb-1"), handy for
+    # `docker exec -it mariadb ...` during the defense.
+    container_name: mariadb
+    # Restart the container automatically if it crashes, and at boot, unless
+    # we stopped it ourselves with `docker compose stop/down`.
+    restart: unless-stopped
+    # Give every KEY=value of .env to the container as environment variables.
+    env_file: .env
+    # Mount these secrets as read-only files /run/secrets/<name>.
+    secrets:
+      - db_root_password
+      - db_password
+    volumes:
+      # Named volume (declared at the bottom) -> MariaDB's data folder.
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception
+    # How Docker decides the service is ready, used by `depends_on` below.
+    #   CMD-SHELL            run the test through `sh -c`, needed for $(...)
+    #   mariadb-admin ping   asks the local server "are you alive?"
+    #   -p"$$(cat ...)"      logs in as root with the secret, otherwise the
+    #                        server logs "Access denied" every 5 s. `$$` is how
+    #                        you write a literal `$` in a compose file (a single
+    #                        `$` would be a compose ${VARIABLE}).
+    #   interval/timeout     test every 5 s, each test may take 3 s
+    #   retries              unhealthy after 10 consecutive failures
+    #   start_period         failures during the first 30 s (first-boot
+    #                        initialisation) do not count
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -uroot -p\"$$(cat /run/secrets/db_root_password)\" --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  wordpress:
+    build: ./requirements/wordpress
+    image: wordpress:inception
+    container_name: wordpress
+    restart: unless-stopped
+    env_file: .env
+    secrets:
+      - db_password
+      - credentials
+    volumes:
+      # The WordPress files. NGINX mounts the same volume to serve them.
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+    # Start only once MariaDB's healthcheck passes (not just "container started").
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    # Healthy once PID 1 is php-fpm, i.e. the entrypoint finished installing
+    # WordPress and `exec`ed php-fpm. /proc/1/comm = name of process 1.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q php-fpm /proc/1/comm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s
+
+  nginx:
+    build: ./requirements/nginx
+    image: nginx:inception
+    container_name: nginx
+    restart: unless-stopped
+    env_file: .env
+    # The ONLY published port: host port -> container port. Everything else
+    # is reachable only inside the Docker network.
+    # "${NGINX_PORT}" is substituted by compose from .env.
+    ports:
+      - "${NGINX_PORT}:${NGINX_PORT}"
+    volumes:
+      # Same WordPress files, read-only (:ro): NGINX only needs to read them.
+      - wordpress_data:/var/www/html:ro
+    networks:
+      - inception
+    # Start after WordPress is installed and php-fpm runs.
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+# User-defined bridge network: a private virtual network for the 3 containers.
+# On it, containers find each other by service name (Docker's embedded DNS),
+# and nothing is reachable from outside except the published port.
+# `name:` fixes the real name to "inception" (otherwise "inception_inception").
+networks:
+  inception:
+    name: inception
+    driver: bridge
+
+# Named volumes stored where the subject wants them (/home/<login>/data).
+#   driver: local + type: none + o: bind  -> the "local" volume driver mounts
+#   an existing host folder (device). It is still a NAMED VOLUME managed by
+#   Docker (`docker volume ls/inspect` show it), not a bind mount written in a
+#   service as "- /host/path:/container/path", which the subject forbids here.
+# `name:` gives the exact names mariadb_data / wordpress_data.
+# The host folders must exist before `up` (the Makefile creates them).
+volumes:
+  mariadb_data:
+    name: mariadb_data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/mariadb
+  wordpress_data:
+    name: wordpress_data
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR}/wordpress
+
+# Docker secrets: files on the host (outside git, created by `make secrets`),
+# mounted into the containers that list them, at /run/secrets/<name>.
+# Paths are relative to this compose file, hence "../secrets".
+secrets:
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
+  credentials:
+    file: ../secrets/credentials.txt

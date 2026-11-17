@@ -1,0 +1,6 @@
+# Files NOT sent to the Docker daemon when building this image (the "build
+# context"). Keeps the context small and makes sure no stray file ends up
+# in an image by accident.
+.git*
+.env*
+*.md
