@@ -75,7 +75,25 @@ Note the irony: the subject makes you run Docker **inside a VM**. The VM is your
   └─────────────────────────┘
   ```
   - **Why this design**: (1) *caching*: unchanged step + everything before it is reused; (2) *sharing*: ten images on `debian:bookworm` store that base once on disk; (3) *cheap containers*: a container only adds a thin writable layer, and **copy-on-write** copies a modified file up into it, leaving the original intact.
-  - **Gotcha**: deleting a file in a later layer only hides it; the earlier layer still holds it, so the image does not shrink. Download, use and remove in a single `RUN` (chain with `&&`). Inspect with `docker history <image>`.
+  - **A layer is a frozen record of what one instruction changed; once built it can never be edited.** That immutability is what makes the design work:
+    1. *Safe caching*: an unchangeable layer can be reused whenever the instruction and everything before it are identical, with no need to re-check it.
+    2. *Safe sharing*: ten images on `debian:bookworm` point to the same layer, stored and downloaded once. No image can alter it and corrupt the others.
+    3. *Many containers from one image*: they all read the same read-only layers, each with only its own thin writable layer, so a container cannot damage the image or its neighbours.
+    4. *Reproducibility*: layers are identified by a hash of their content (`sha256:...`), so the image you tested is exactly the image everyone runs ("works on my machine" solved).
+    5. *Cheap distribution*: push/pull only transfers the layers the other side does not already have.
+  - **Gotcha (the cost of immutability)**: a later layer cannot reach back and delete a file from an earlier one. It only records a small "whiteout" marker saying "this path is deleted". overlayfs then hides the file in the merged view (`ls` shows nothing), but the earlier layer still contains the bytes, so the image does not shrink and anyone pulling it downloads them.
+    ```dockerfile
+    # BAD: layer 2 keeps ~40 MB of apt lists forever, layer 3 only hides them
+    RUN apt-get update && apt-get install -y mariadb-server
+    RUN rm -rf /var/lib/apt/lists/*
+
+    # GOOD: Docker snapshots the filesystem at the END of the instruction,
+    # when the lists have already been deleted, so they are never in the layer
+    RUN apt-get update && apt-get install -y mariadb-server \
+        && rm -rf /var/lib/apt/lists/*
+    ```
+    Same rule for anything temporary (downloaded archives, build tools): download, use and delete inside a single `RUN`. Analogy: committing a big file to git and then committing its deletion leaves the repo as big as before. Check with `docker history <image>`; a `rm` in its own layer shows `0B`.
+  - **`&&` vs `;` inside a `RUN`** (separate issue): with `cmd1 ; cmd2` only the exit status of the last command counts, so a failed `apt-get update` goes unnoticed if the install succeeds. With `&&` the first failure fails the build. Separate `RUN` lines also stop the build on failure; the reasons to prefer one `RUN` are the cleanup rule above and avoiding a stale cached `apt-get update` layer feeding a later `apt-get install`.
 - **Container**: a running (or stopped) instance of an image. Like an object. **Container = image (read-only layers) + one writable layer + isolated process (namespaces/cgroups).** Many containers can come from one image and share its layers. Deleting the container discards the writable layer, hence volumes for persistent data.
 - **Dockerfile**: text recipe to build an image. Instructions that change files (`FROM`, `RUN`, `COPY`/`ADD`) create a **layer**; metadata instructions (`CMD`, `ENTRYPOINT`, `ENV`, `EXPOSE`, `USER`, `LABEL`, `VOLUME`) only edit the image **config** and add no files (`0B` in `docker history`). They still take part in the build cache.
   - `FROM` base image · `RUN` execute at **build** time · `COPY`/`ADD` copy files in · `ENV` set env var · `ARG` build-time variable · `WORKDIR` · `EXPOSE` documentation of a port (does *not* publish it) · `USER` · `ENTRYPOINT` the fixed program to run · `CMD` default arguments/command (overridable) · `VOLUME`.

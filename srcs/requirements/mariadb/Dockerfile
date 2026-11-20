@@ -4,6 +4,8 @@ FROM debian:bookworm
 
 # One RUN = one image layer. `&&` chains the commands and stops at the first
 # failure, so a broken install fails the build instead of producing a bad image.
+# Using ; between the commands could have produced a bad image, since failure of 
+# a command is ignored in this case as long as the next one succeeds.
 #   apt-get update                 download the list of available packages
 #   install -y                     answer "yes" to every prompt (no human to type it)
 #   --no-install-recommends        skip optional extras -> smaller image
@@ -11,6 +13,12 @@ FROM debian:bookworm
 #   mariadb-client                 the `mariadb` and `mariadb-admin` command-line tools
 #   rm -rf /var/lib/apt/lists/*    delete the package lists downloaded by `update`
 #                                  (useless at runtime, saves ~20 MB in this layer)
+#                                  MUST be in this same RUN: a layer is frozen once
+#                                  built, so a `rm` in a later RUN could not delete
+#                                  the files from this layer, it would only hide
+#                                  them (a "whiteout" marker) and the image would
+#                                  keep the full size. Docker snapshots the layer at
+#                                  the END of the RUN, after the lists are gone.
 #   rm -rf /var/lib/mysql/*        the Debian package ships an already-initialised
 #                                  database here. We empty it so that our entrypoint
 #                                  always initialises the database itself, with OUR
