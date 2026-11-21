@@ -20,6 +20,19 @@ fail() {
 # --- 1. Fail fast if the configuration is incomplete ------------------------
 # `${VAR:-}` expands to an empty string if VAR is unset (needed because of
 # `set -u`); `[ -n "..." ]` is true when the string is not empty.
+#
+# How the line below is read:
+#   1. `${DB_NAME:-}`  value of DB_NAME, or "" if it is unset or empty, thanks
+#                      to the `:-`. Without it, `set -u` would abort here with
+#                      a generic message.
+#   2. `[ -n "..." ]`  a command that prints nothing and exits with 0 (success)
+#                      if the string is non-empty, 1 (failure) if it is empty.
+#   3. `A || B`        run A; run B ONLY IF A failed. So `fail` runs only when
+#                      DB_NAME is empty, and prints our own message. `set -e`
+#                      does not exit on the failing `[`, because `||` handles it.
+# The variables themselves are not set in this script: compose injects every
+# KEY=value of srcs/.env (`env_file: .env`) into the container's environment
+# before this script starts.
 [ -n "${DB_NAME:-}" ] || fail "DB_NAME is not set (srcs/.env)"
 [ -n "${DB_USER:-}" ] || fail "DB_USER is not set (srcs/.env)"
 [ -n "${DB_PORT:-}" ] || fail "DB_PORT is not set (srcs/.env)"
