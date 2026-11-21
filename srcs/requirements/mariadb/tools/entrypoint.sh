@@ -50,10 +50,13 @@ DB_PASS=$(tr -d '\r\n' < /run/secrets/db_password)
 [ -n "$DB_PASS" ]   || fail "db_password is empty"
 
 # --- 2. Runtime directories and ownership ------------------------------------
-# /run/mysqld holds the server's socket and PID file. The server runs as the
-# unprivileged `mysql` user, so that user must own it and the data directory.
-# The data directory is the volume: its ownership comes from the host folder,
-# which is why it is fixed here at runtime and not in the Dockerfile.
+# The server runs as the unprivileged `mysql` user, so it must be able to
+# write to two places:
+#   /run/mysqld  socket and PID file. Not in the volume: we create it here, as
+#                root, so it must be handed to `mysql`.
+#   $DATADIR     the volume, mounted at start, owned by whoever owns the host
+#                folder (not `mysql`). That is why it is fixed here at runtime
+#                and not in the Dockerfile: the mount hides what the image had.
 mkdir -p /run/mysqld
 chown -R mysql:mysql /run/mysqld "$DATADIR"
 # After a crash (or `docker kill`), the old PID/socket files can stay behind
@@ -65,9 +68,15 @@ rm -f /run/mysqld/mysqld.pid /run/mysqld/mysqld.sock
 if [ ! -f "$MARKER" ]; then
     echo "[mariadb] first start: initialising the database"
 
-    # Create MariaDB's own system tables (users, privileges...) in an empty
-    # data directory. Skipped if they already exist (e.g. a previous attempt
-    # crashed after this step).
+    # Create MariaDB's own system tables in an empty data directory. They are
+    # the server's bookkeeping, stored in a special database named `mysql` (name
+    # kept from MySQL, MariaDB's origin): accounts and password hashes
+    # (`global_priv`, seen through the `user` view), privileges per database /
+    # table / column (`db`, `tables_priv`, `columns_priv`), stored procedures,
+    # time zones... Without them the server cannot tell who may connect.
+    # CREATE USER and GRANT below ultimately just add rows to these tables.
+    # Skipped if they already exist (e.g. a previous attempt crashed after this
+    # step).
     #   --user=mysql     files are created owned by the mysql user
     #   --skip-test-db   do not create the demo `test` database
     #   > /dev/null      hide the long, normal output
@@ -75,12 +84,20 @@ if [ ! -f "$MARKER" ]; then
         mariadb-install-db --user=mysql --datadir="$DATADIR" --skip-test-db > /dev/null
     fi
 
+    # "Bootstrap", for a database: the server sets up its own initial state
+    # using nothing but itself (from the idea of pulling yourself up by your own
+    # bootstraps). The usual way, starting a server, waiting for it, connecting
+    # a client, then stopping it, would leave an unsecured server listening on
+    # the network and need a background process. A container lives exactly as
+    # long as its PID 1, and the real server must be that PID 1 (see the `exec`
+    # at the end), so no helper server may be left running in the background.
+    #
     # --bootstrap: start the server WITHOUT networking, read SQL statements from
     # standard input, execute them, then exit. This runs in the FOREGROUND
-    # (no `&`, no background server to wait for and kill), so it cannot break
-    # the "no background process" rule. The SQL comes from the heredoc below:
-    # everything between `<<EOF` and the closing `EOF` is sent to stdin, after
-    # the shell has replaced ${...} with the values of the variables.
+    # (no `&`, no background server to wait for and kill), so nothing is left
+    # running when we reach the final `exec`. The SQL comes from the heredoc
+    # below: everything between `<<EOF` and the closing `EOF` is sent to stdin,
+    # after the shell has replaced ${...} with the values of the variables.
     #   FLUSH PRIVILEGES (first)  in bootstrap mode the privilege tables are not
     #                             loaded yet; this loads them so that ALTER USER
     #                             and GRANT work.
