@@ -98,17 +98,37 @@ if [ ! -f "$MARKER" ]; then
     # running when we reach the final `exec`. The SQL comes from the heredoc
     # below: everything between `<<EOF` and the closing `EOF` is sent to stdin,
     # after the shell has replaced ${...} with the values of the variables.
-    #   FLUSH PRIVILEGES (first)  in bootstrap mode the privilege tables are not
+    #   FLUSH PRIVILEGES          in bootstrap mode the privilege tables are not
     #                             loaded yet; this loads them so that ALTER USER
-    #                             and GRANT work.
+    #                             and GRANT work. There is no second FLUSH at the
+    #                             end: ALTER USER, CREATE USER and GRANT already
+    #                             update the privileges in memory themselves, and
+    #                             the server exits right after. (A FLUSH is only
+    #                             needed after editing the `mysql.*` tables by
+    #                             hand.)
     #   ALTER USER root           give root a password (on Debian, root can
     #                             otherwise log in from inside the container
     #                             with no password at all).
     #   `backticks`               quote a database name in SQL; escaped as \`
     #                             because a bare ` means "run a command" in sh.
-    #   '${DB_USER}'@'%'          a user allowed to connect from ANY host ('%'),
-    #                             needed because WordPress is another container
-    #                             with its own IP address.
+    #   CHARACTER SET utf8mb4     which characters can be stored and how they are
+    #                             encoded: real UTF-8 (up to 4 bytes), so all of
+    #                             Unicode including emoji. MariaDB's older `utf8`
+    #                             is a 3-byte subset. WordPress expects utf8mb4.
+    #   COLLATE utf8mb4_unicode_ci  the rules to COMPARE and SORT strings: Unicode
+    #                             ordering (`unicode`), case-insensitive (`ci`),
+    #                             so 'Anna' = 'anna'. A collation belongs to one
+    #                             character set, hence the same name prefix.
+    #   'user'@'host'             a MariaDB account is a PAIR: who you are and
+    #                             where you connect from. The same name from two
+    #                             hosts is two different accounts. Here:
+    #                             'root'@'localhost'  root, only from inside this
+    #                                                 container.
+    #                             '${DB_USER}'@'%'    the WordPress user from ANY
+    #                                                 host ('%' is the wildcard),
+    #                                                 needed because WordPress is
+    #                                                 another container with its
+    #                                                 own IP address.
     #   GRANT ... ON db.*         that user gets every right on the WordPress
     #                             database only, not on the whole server.
     mariadbd --user=mysql --datadir="$DATADIR" --bootstrap <<EOF
@@ -117,7 +137,6 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY '${ROOT_PASS}';
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
-FLUSH PRIVILEGES;
 EOF
 
     # Only reached if everything above succeeded (set -e). Next boots skip
