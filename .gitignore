@@ -1,3 +1,5 @@
 # Never commit passwords (instant 0) nor your local settings.
 secrets/
 srcs/.env
+# Personal defense notes.
+defense.md
