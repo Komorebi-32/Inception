@@ -69,22 +69,22 @@ In a terminal of the VM:
 
 - [x] `https://bkaras-g.42.fr`: warning about the certificate → *Advanced* → *Accept the risk and continue*. The site "Inception" shows (not the WordPress installer).
 - [x] HTTP must be refused. Check it in a terminal, not in Firefox (Firefox's "HTTPS-First" and the address bar history silently switch to `https://`, so the page opens even though the server refuses HTTP): `curl -v http://bkaras-g.42.fr` must end with `Failed to connect ... port 80 ... Connection refused`. To show it in Firefox anyway: Settings → Privacy & Security → disable HTTPS-Only / HTTPS-First, then type the full `http://` URL.
-- [ ] Padlock → certificate details: issued to `bkaras-g.42.fr`, connection TLS 1.2 or 1.3.
-- [ ] Log in at `https://bkaras-g.42.fr/wp-admin` as `writer` (password line 2), open the "Hello world!" post, leave a comment. Log out.
-- [ ] Log in as `bkaras-g_boss` (password line 1). *Pages* → *Sample Page* → edit the text → *Update*. Open the page on the site: the change is there.
+- [x] Padlock → certificate details: issued to `bkaras-g.42.fr`, connection TLS 1.2 or 1.3.
+- [x] Log in at `https://bkaras-g.42.fr/wp-admin` as `writer` (password line 2), open the "Hello world!" post, leave a comment. Log out.
+- [x] Log in as `bkaras-g_boss` (password line 1). *Pages* → *Sample Page* → edit the text → *Update*. Open the page on the site: the change is there.
 
 ## 9. Evaluator rehearsal (terminal)
 
-- [ ] Run every command of §9.2 in order and compare with the expected result written next to it.
-- [ ] Database: `docker exec -it mariadb mariadb -uroot -p` (password: `secrets/db_root_password.txt`), then `SHOW DATABASES;`, `USE wordpress;`, `SHOW TABLES;`, `SELECT user_login FROM wp_users;` → two users. `exit`.
-- [ ] Crash test: `docker exec wordpress kill 1`, wait 10 s, `make ps`: WordPress is up again. (Not `docker kill`: Docker treats that as a manual stop and does not restart.)
-- [ ] Port change drill (§9.3), with a timer, once per service:
+- [x] Run every command of §9.2 in order and compare with the expected result written next to it.
+- [x] Database: `docker exec -it mariadb mariadb -uroot -p` (password: `secrets/db_root_password.txt`), then `SHOW DATABASES;`, `USE wordpress;`, `SHOW TABLES;`, `SELECT user_login FROM wp_users;` → two users. `exit`.
+- [x] Crash test: `docker exec wordpress kill 1`, wait 10 s, `make ps`: WordPress is up again. (Not `docker kill`: Docker treats that as a manual stop and does not restart.)
+- [x] Port change drill (§9.3), with a timer, once per service:
   - NGINX: `NGINX_PORT=8443` in `srcs/.env` → `make` → `https://bkaras-g.42.fr:8443` works in Firefox, `:443` no longer does.
   - php-fpm: `WP_PORT=9001` → `make` → site still works; `docker exec nginx grep fastcgi_pass /etc/nginx/nginx.conf` shows 9001.
   - MariaDB: `DB_PORT=3307` → `make` → site still works; `docker exec wordpress grep DB_HOST /var/www/html/wp-config.php` shows 3307.
   - Put the three values back (443, 9000, 3306) → `make`.
-- [ ] Persistence: `sudo reboot`. After login: `cd ~/inception && make ps` (the containers came back by themselves; run `make` if not). The comment and the page edit are still there.
-- [ ] Clean slate, as the evaluator does before starting: `make fclean`, then the wipe command of §1, then `make`. Everything rebuilds and the site is a fresh install (new passwords are **not** generated: `secrets/` is kept on purpose).
+- [x] Persistence: `sudo reboot`. After login: `cd ~/inception && make ps` (the containers came back by themselves; run `make` if not). The comment and the page edit are still there.
+- [x] Clean slate, as the evaluator does before starting: `make fclean`, then the wipe command of §1, then `make`. Everything rebuilds and the site is a fresh install (new passwords are **not** generated: `secrets/` is kept on purpose).
 - [ ] Fresh clone, as a new user of the repo would. Both copies share the compose project name and `/home/bkaras-g/data`, so first `make fclean` in `~/inception`. Then `cd /tmp && git clone https://github.com/Komorebi-32/Inception.git t && cd t && make`: it must work without any manual file (secrets and `.env` are generated). Then `make fclean` in `/tmp/t`, delete `/tmp/t`, and `cd ~/inception && make` again.
 
 ## 10. Documentation, in your own words

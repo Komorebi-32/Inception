@@ -86,4 +86,4 @@ Other students' public repositories used for comparison (ideas only): sys-harmon
 - Writing a first version of the Dockerfiles, entrypoint scripts, compose file, Makefile and these documents, with a comment on every line explaining what it does and why.
 - Running the stack in a test environment and checking it against the evaluation sheet (HTTPS only, TLS versions, two WordPress users, persistence, port change, restart after a crash). This found real bugs, e.g. MariaDB's configuration files being read alphabetically, and the NGINX host header losing the port.
 
-Not delegated: understanding every line (each file was re-read and explained without notes), the VM installation and configuration, running and checking the project on the VM, and the defense.
+Tasks done manually, with the help of Claude as a teaching assistant: understanding each file, the VM installation and configuration, running and checking the project on the VM, and the defense.
