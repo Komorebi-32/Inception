@@ -81,17 +81,13 @@ dirs:
 	@mkdir -p $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 
 # Make bkaras-g.42.fr point to this machine, only if the line is missing.
-#   grep -qE    quiet (-q: only the exit status matters, found / not found),
-#               extended regex (-E)
-#   (^|[[:space:]])DOMAIN([[:space:]]|$$)
-#               the domain must be a WHOLE entry, bordered by whitespace or the
-#               line ends. `grep -w` is not enough: it counts a dot as a word
-#               border, so the installer's line "127.0.1.1 jdoe.jdoe.42.fr jdoe"
-#               would match "jdoe.42.fr" and the entry would never be added.
-#               ($$ is a literal $ in a Makefile.)
+#   grep -qxF   look for the EXACT line we add: quiet (-q: only the exit status
+#               matters), whole line (-x), fixed string (-F: the dots are plain
+#               dots, not regex). So the installer's line
+#               "127.0.1.1 jdoe.jdoe.42.fr jdoe" does not count as a match.
 #   sudo tee -a append as root (a plain `>>` would run without sudo rights)
 hosts:
-	@grep -qE '(^|[[:space:]])$(DOMAIN)([[:space:]]|$$)' /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null
+	@grep -qxF "127.0.0.1 $(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts > /dev/null
 
 # Remove the containers, the network AND the images built by this project.
 clean:
