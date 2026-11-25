@@ -6,50 +6,50 @@ The project files are written (Makefile, `srcs/`, README, USER_DOC, DEV_DOC) and
 
 ## 1. On this machine: save the work
 
-- [ ] Read the diff before committing: `git status`, `git diff`, and skim every new file. Each line has a comment; anything you cannot explain is a defense risk.
-- [ ] Check that no secret is about to be committed: `git status --short` must not list `secrets/` nor `srcs/.env` (they are in `.gitignore`).
-- [ ] Commit and push to GitHub: `git add -A && git commit -m "Implement Inception" && git push`.
+- [x] Read the diff before committing: `git status`, `git diff`, and skim every new file. Each line has a comment; anything you cannot explain is a defense risk.
+- [x] Check that no secret is about to be committed: `git status --short` must not list `secrets/` nor `srcs/.env` (they are in `.gitignore`).
+- [x] Commit and push to GitHub: `git add -A && git commit -m "Implement Inception" && git push`.
   - Check: on github.com/Komorebi-32/Inception you see `srcs/.env.example` but **no** `secrets/` folder and **no** `srcs/.env`.
 
 ## 2. Create the VM (VirtualBox, at school)
 
-- [ ] Download the Debian 12 "bookworm" netinst ISO (amd64): the "bookworm" page on https://www.debian.org/releases/ links to the installer. Bookworm is the right choice **today** because Debian 13 "trixie" is the current stable. Re-check https://www.debian.org/releases/ the day you build.
-- [ ] Store the VM where the quota allows it: `/sgoinfre/goinfre/Perso/bkaras-g` (30 GB limit; check with `du -sh /sgoinfre/goinfre/Perso/bkaras-g`).
-- [ ] New VM: type Linux / Debian 64-bit, 2 CPUs (more if available), 4096 MB RAM, dynamically allocated disk of 20 GB, network "NAT".
-- [ ] VirtualBox → VM settings → Network → Advanced → Port Forwarding: add a rule `ssh`, host port `4242`, guest port `22` (for SSH from the host, like Born2beRoot).
+- [x] Download the Debian 12 "bookworm" netinst ISO (amd64): the "bookworm" page on https://www.debian.org/releases/ links to the installer. Bookworm is the right choice **today** because Debian 13 "trixie" is the current stable. Re-check https://www.debian.org/releases/ the day you build.
+- [x] Store the VM where the quota allows it: `/sgoinfre/goinfre/Perso/bkaras-g` (30 GB limit; check with `du -sh /sgoinfre/goinfre/Perso/bkaras-g`).
+- [x] New VM: type Linux / Debian 64-bit, 2 CPUs (more if available), 4096 MB RAM, dynamically allocated disk of 20 GB, network "NAT".
+- [x] VirtualBox → VM settings → Network → Advanced → Port Forwarding: add a rule `ssh`, host port `4242`, guest port `22` (for SSH from the host, like Born2beRoot).
   - Check: the VM boots on the ISO.
 
 ## 3. Install Debian in the VM
 
-- [ ] Language English, your keyboard layout, hostname `bkaras-g` (anything works, your login is simplest).
-- [ ] Set a root password, then create the normal user: **user name = your 42 login, exactly** (lowercase). The Makefile takes the login from `whoami`, so this decides the domain `bkaras-g.42.fr` and the data path `/home/bkaras-g/data`.
-- [ ] Partitioning: "Guided - use entire disk", all files in one partition.
-- [ ] Software selection: tick **Xfce** (a desktop with a browser is needed: the evaluator opens the site in the VM's browser, and `bkaras-g.42.fr` only exists in the VM's `/etc/hosts`), **SSH server** and **standard system utilities**. Untick GNOME and "web server".
-- [ ] Install GRUB on the disk, reboot, remove the ISO.
+- [x] Language English, your keyboard layout, hostname `bkaras-g` (anything works, your login is simplest).
+- [x] Set a root password, then create the normal user: **user name = your 42 login, exactly** (lowercase). The Makefile takes the login from `whoami`, so this decides the domain `bkaras-g.42.fr` and the data path `/home/bkaras-g/data`.
+- [x] Partitioning: "Guided - use entire disk", all files in one partition.
+- [x] Software selection: tick **Xfce** (a desktop with a browser is needed: the evaluator opens the site in the VM's browser, and `bkaras-g.42.fr` only exists in the VM's `/etc/hosts`), **SSH server** and **standard system utilities**. Untick GNOME and "web server".
+- [x] Install GRUB on the disk, reboot, remove the ISO.
   - Check: you can log into the Xfce desktop as `bkaras-g`.
 
 ## 4. First configuration of the VM
 
 In a terminal of the VM:
-- [ ] `su -` (root password), then `apt update && apt install -y sudo vim make git curl openssl ca-certificates`.
-- [ ] `usermod -aG sudo bkaras-g`, then `exit` twice and log in again.
+- [x] `su -` (root password), then `apt update && apt install -y sudo vim make git curl openssl ca-certificates`.
+- [x] `usermod -aG sudo bkaras-g`, then `exit` twice and log in again.
   - Check: `sudo whoami` prints `root`.
-- [ ] `sudo apt install -y firefox-esr` if Firefox is not already there.
-- [ ] Optional but recommended: from the host, `ssh -p 4242 bkaras-g@localhost` works (copy-paste is easier); VS Code "Remote - SSH" on the same address lets you edit files in the VM.
-- [ ] Optional: in `/etc/ssh/sshd_config`, `PermitRootLogin no`, then `sudo systemctl restart ssh` (same as Born2beRoot).
+- [x] `sudo apt install -y firefox-esr` if Firefox is not already there.
+- [x] Optional but recommended: from the host, `ssh -p 4242 bkaras-g@localhost` works (copy-paste is easier); VS Code "Remote - SSH" on the same address lets you edit files in the VM.
+- [x] Optional: in `/etc/ssh/sshd_config`, `PermitRootLogin no`, then `sudo systemctl restart ssh` (same as Born2beRoot).
 
 ## 5. Install Docker in the VM
 
-- [ ] Run the commands of §4.2 (Docker's Debian repository, **`linux/debian`**, not `linux/ubuntu`).
-- [ ] `sudo usermod -aG docker bkaras-g`, then log out of the desktop and log in again (or `newgrp docker` in the current terminal).
+- [x] Run the commands of §4.2 (Docker's Debian repository, **`linux/debian`**, not `linux/ubuntu`).
+- [x] `sudo usermod -aG docker bkaras-g`, then log out of the desktop and log in again (or `newgrp docker` in the current terminal).
   - Check: `docker run --rm debian:bookworm echo ok` prints `ok` **without** sudo, and `docker compose version` prints v2 or later.
-- [ ] Take a VirtualBox snapshot now ("Docker installed"): you can come back to it if anything breaks later.
+- [x] Take a VirtualBox snapshot now ("Docker installed"): you can come back to it if anything breaks later.
 
 ## 6. Get the project into the VM
 
-- [ ] `git clone https://github.com/Komorebi-32/Inception.git ~/inception && cd ~/inception`. If the repo is private, use a GitHub personal access token as the password, or add an SSH key to GitHub.
-- [ ] Check the login the Makefile will use: `whoami` must print your 42 login. If it does not, either fix the user or always run `make LOGIN=bkaras-g`.
-- [ ] Put your login in the docs (the README's first line must contain it):
+- [x] `git clone https://github.com/Komorebi-32/Inception.git ~/inception && cd ~/inception`. If the repo is private, use a GitHub personal access token as the password, or add an SSH key to GitHub.
+- [x] Check the login the Makefile will use: `whoami` must print your 42 login. If it does not, either fix the user or always run `make LOGIN=bkaras-g`.
+- [x] Put your login in the docs (the README's first line must contain it):
   ```sh
   sed -i 's/bkaras-g/YOUR_LOGIN/g' README.md USER_DOC.md DEV_DOC.md
   head -1 README.md   # *This project has been created as part of the 42 curriculum by YOUR_LOGIN.*
@@ -58,17 +58,17 @@ In a terminal of the VM:
 
 ## 7. First run
 
-- [ ] `make`. It asks your sudo password once (to add `127.0.0.1 bkaras-g.42.fr` to `/etc/hosts`). The first build takes a few minutes (packages + WordPress download).
-- [ ] `make ps`: three containers `Up`, `mariadb` and `wordpress` `(healthy)`.
-- [ ] `make logs`: lines prefixed `[mariadb]`, `[wordpress]`, `[nginx]`, no `error:` line. Ctrl-C to quit.
+- [x] `make`. It asks your sudo password once (to add `127.0.0.1 bkaras-g.42.fr` to `/etc/hosts`). The first build takes a few minutes (packages + WordPress download).
+- [x] `make ps`: three containers `Up`, `mariadb` and `wordpress` `(healthy)`.
+- [x] `make logs`: lines prefixed `[mariadb]`, `[wordpress]`, `[nginx]`, no `error:` line. Ctrl-C to quit.
   - If something fails, the line `[service] error: ...` says what is missing; §10 of the recipe lists the known pitfalls.
-- [ ] `ls secrets/`: three files; `cat secrets/credentials.txt`: line 1 = admin password, line 2 = author password.
-- [ ] `grep -E 'WP_ADMIN_USER|WP_USER=' srcs/.env`: the admin is `bkaras-g_boss`, the author `writer`. Change them in `srcs/.env` **before** the first `make` if you prefer other names (never containing "admin"); after the first run a change needs `make fclean && make`.
+- [x] `ls secrets/`: three files; `cat secrets/credentials.txt`: line 1 = admin password, line 2 = author password.
+- [x] `grep -E 'WP_ADMIN_USER|WP_USER=' srcs/.env`: the admin is `bkaras-g_boss`, the author `writer`. Change them in `srcs/.env` **before** the first `make` if you prefer other names (never containing "admin"); after the first run a change needs `make fclean && make`.
 
 ## 8. Browser checks (Firefox in the VM)
 
-- [ ] `https://bkaras-g.42.fr`: warning about the certificate → *Advanced* → *Accept the risk and continue*. The site "Inception" shows (not the WordPress installer).
-- [ ] `http://bkaras-g.42.fr`: must **fail** (unable to connect).
+- [x] `https://bkaras-g.42.fr`: warning about the certificate → *Advanced* → *Accept the risk and continue*. The site "Inception" shows (not the WordPress installer).
+- [x] HTTP must be refused. Check it in a terminal, not in Firefox (Firefox's "HTTPS-First" and the address bar history silently switch to `https://`, so the page opens even though the server refuses HTTP): `curl -v http://bkaras-g.42.fr` must end with `Failed to connect ... port 80 ... Connection refused`. To show it in Firefox anyway: Settings → Privacy & Security → disable HTTPS-Only / HTTPS-First, then type the full `http://` URL.
 - [ ] Padlock → certificate details: issued to `bkaras-g.42.fr`, connection TLS 1.2 or 1.3.
 - [ ] Log in at `https://bkaras-g.42.fr/wp-admin` as `writer` (password line 2), open the "Hello world!" post, leave a comment. Log out.
 - [ ] Log in as `bkaras-g_boss` (password line 1). *Pages* → *Sample Page* → edit the text → *Update*. Open the page on the site: the change is there.
