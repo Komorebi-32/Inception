@@ -1,13 +1,13 @@
 # Inception: cooking recipe (subject v5.3)
 
 How to produce every file of the project, in order, so that each line can be defended and each line of the evaluation grid passes.
-Replace `<login>` everywhere with your 42 login (domain `<login>.42.fr`, data in `/home/<login>/data`).
+Replace `bkaras-g` everywhere with your 42 login (domain `bkaras-g.42.fr`, data in `/home/bkaras-g/data`).
 
 > Understand before you paste (subject ch. IV "AI Instructions"): anything below you cannot explain in defense is a liability. Type it yourself, run it, break it, fix it.
 
 **How to read the files below.** Every file of sections 5 to 7 is complete and commented line by line. The comments are part of the file: keep them while you learn, then trim them to what you would say out loud in defense. Each comment explains what the line does and why it is there. Comment syntax differs by file type: `#` in Dockerfiles, shell, YAML, Makefile, `.env`, NGINX and MariaDB files; `;` in the PHP-FPM file.
 
-**Tested.** On 2026-11-13 these exact files (with `<login>` = `ktest`) were built and run from an empty data folder with Docker 29.9 / Compose v5.6. Section 9.1 lists what was checked and the bugs that the test found in the previous version of this recipe.
+**Tested.** On 2026-11-13 these exact files (with `bkaras-g` = `ktest`) were built and run from an empty data folder with Docker 29.9 / Compose v5.6. Section 9.1 lists what was checked and the bugs that the test found in the previous version of this recipe.
 
 ---
 
@@ -84,17 +84,17 @@ docker stop $(docker ps -qa); docker rm $(docker ps -qa); docker rmi -f $(docker
 - [ ] `srcs/` not at repo root, or Makefile not at repo root.
 
 ### Docs
-- [ ] `README.md` at root. First line (italic): `*This project has been created as part of the 42 curriculum by <login>.*`
+- [ ] `README.md` at root. First line (italic): `*This project has been created as part of the 42 curriculum by bkaras-g.*`
 - [ ] README sections: Description, Instructions, Resources (including how AI was used, for which tasks/parts), plus Project description with comparisons: **VM vs Docker, Secrets vs Env vars, Docker network vs Host network, Volumes vs Bind mounts**. In English.
 - [ ] `USER_DOC.md` (services, start/stop, access site + admin panel, where credentials are, how to check services run).
 - [ ] `DEV_DOC.md` (prerequisites, setup from scratch incl. secrets, Makefile + compose usage, container/volume commands, where data lives and how it persists).
 
 ### Live checks
-- [ ] Only port 443 reachable; `http://<login>.42.fr` (port 80) refuses; `https://<login>.42.fr` shows the installed site (not the WP installer).
+- [ ] Only port 443 reachable; `http://bkaras-g.42.fr` (port 80) refuses; `https://bkaras-g.42.fr` shows the installed site (not the WP installer).
 - [ ] TLS v1.2 or v1.3 demonstrated (self-signed warning is fine).
 - [ ] One non-empty Dockerfile per service; `docker compose ps` shows all containers up.
 - [ ] `docker network ls` shows the project network; be ready to explain Docker networks.
-- [ ] WordPress container: no NGINX inside. Volume check: `docker volume ls`, `docker volume inspect <name>` output contains `/home/<login>/data/`.
+- [ ] WordPress container: no NGINX inside. Volume check: `docker volume ls`, `docker volume inspect <name>` output contains `/home/bkaras-g/data/`.
 - [ ] Add a comment as the normal WP user. Log in as admin; admin username must **not** contain `admin`/`Admin`/`administrator`. Edit a page in the dashboard and see it change on the site.
 - [ ] MariaDB container: no NGINX inside; same volume check; explain how to log into the DB; DB not empty. WP DB has **2 users**, one of them the admin.
 - [ ] **Persistence**: reboot the VM, `docker compose` up again, everything (site edits, DB) is still there.
@@ -115,7 +115,7 @@ docker stop $(docker ps -qa); docker rm $(docker ps -qa); docker rmi -f $(docker
 | Alpine vs Debian | Debian | Your notes: Alpine is lighter but has less documentation and more manual setup (musl, apk); the subject is more about services than image size. Goinfre is capped at 30 GB, but Debian fits (the three images total ~1.3 GB). |
 | Image names | `image: mariadb:inception` etc. | Same name as the service (subject rule). The explicit tag avoids compose's implicit `:latest`. |
 | Secrets | Docker secrets for all passwords; `.env` only for non-secret values (domain, usernames, db name, ports) | Subject: `.env` mandatory, secrets strongly recommended; passwords in git = failure. |
-| Volumes | Named volumes (`name: mariadb_data`, `wordpress_data`) with `driver_opts` pointing at `/home/<login>/data/...` | Subject forbids bind mounts for these two, but requires data under `/home/<login>/data`. |
+| Volumes | Named volumes (`name: mariadb_data`, `wordpress_data`) with `driver_opts` pointing at `/home/bkaras-g/data/...` | Subject forbids bind mounts for these two, but requires data under `/home/bkaras-g/data`. |
 | Ports | All three in `.env` (`NGINX_PORT`, `WP_PORT`, `DB_PORT`), read by every config | The live "change a port" test becomes a one-line edit + `make`. |
 | Variable names | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, never `MYSQL_*` | The `mariadb` client reads `MYSQL_HOST` from the environment (section 10). |
 | MariaDB first boot | `mariadbd --bootstrap` fed by a heredoc | Runs SQL in the foreground with no network and no background process (sys-harmony, aziddineelm). |
@@ -186,13 +186,13 @@ docker --version && docker compose version
 
 ### 4.3 Your user
 ```sh
-sudo usermod -aG docker <login>   # add yourself to the docker group: use docker without sudo
+sudo usermod -aG docker bkaras-g   # add yourself to the docker group: use docker without sudo
 newgrp docker                     # refresh group membership in the current shell, otherwise `docker` still says permission denied
 ```
-Check disk use as you go: `du -sh /sgoinfre/goinfre/Perso/<login>` (30 GB quota).
+Check disk use as you go: `du -sh /sgoinfre/goinfre/Perso/bkaras-g` (30 GB quota).
 
 ### 4.4 Project host prep
-The Makefile (section 7) does all of it on `make`: creates `/home/<login>/data/{mariadb,wordpress}`, adds `127.0.0.1 <login>.42.fr` to `/etc/hosts` (asks for your sudo password once), generates `secrets/` and `srcs/.env`. To do it by hand: `mkdir -p /home/<login>/data/mariadb /home/<login>/data/wordpress` and `echo "127.0.0.1 <login>.42.fr" | sudo tee -a /etc/hosts`.
+The Makefile (section 7) does all of it on `make`: creates `/home/bkaras-g/data/{mariadb,wordpress}`, adds `127.0.0.1 bkaras-g.42.fr` to `/etc/hosts` (asks for your sudo password once), generates `secrets/` and `srcs/.env`. To do it by hand: `mkdir -p /home/bkaras-g/data/mariadb /home/bkaras-g/data/wordpress` and `echo "127.0.0.1 bkaras-g.42.fr" | sudo tee -a /etc/hosts`.
 
 ---
 
@@ -206,9 +206,9 @@ srcs/.env
 ```
 Your notes (and the grid): a pushed `.env` with passwords is a **0**. Here `.env` has no password, but it is generated anyway; commit `.env.example` instead.
 
-### 5.2 `srcs/.env.example` (committed; `make` copies it to `srcs/.env` and fills `<login>`)
+### 5.2 `srcs/.env.example` (committed; `make` copies it to `srcs/.env` and fills `bkaras-g`)
 ```sh
-# Copy this file to srcs/.env (`make` does it for you) and replace <login>.
+# Copy this file to srcs/.env (`make` does it for you) and replace bkaras-g.
 # Only NON-secret settings here. Passwords live in ../secrets/ (Docker secrets).
 # Docker compose reads this file automatically because it sits next to
 # docker-compose.yml: the values are used for ${...} substitution in the yml
@@ -216,9 +216,9 @@ Your notes (and the grid): a pushed `.env` with passwords is a **0**. Here `.env
 # Format: KEY=value, no spaces around "=", no quotes needed.
 
 # Domain of the site. /etc/hosts must map it to 127.0.0.1 (the Makefile does).
-DOMAIN_NAME=<login>.42.fr
-# Host folder holding the two volumes (subject: /home/<login>/data).
-DATA_DIR=/home/<login>/data
+DOMAIN_NAME=bkaras-g.42.fr
+# Host folder holding the two volumes (subject: /home/bkaras-g/data).
+DATA_DIR=/home/bkaras-g/data
 
 # Ports. Changing one of them here + `make` is enough for the live
 # "configuration modification" test (section 9.3 of the recipe).
@@ -240,8 +240,8 @@ DB_HOST=mariadb
 WP_VERSION=6.8.3
 WP_TITLE=Inception
 # Admin login: must NOT contain admin / Admin / administrator (subject rule).
-WP_ADMIN_USER=<login>_boss
-WP_ADMIN_EMAIL=<login>@student.42.fr
+WP_ADMIN_USER=bkaras-g_boss
+WP_ADMIN_EMAIL=bkaras-g@student.42.fr
 # Second, non-admin user (role "author").
 WP_USER=writer
 WP_USER_EMAIL=writer@student.42.fr
@@ -360,7 +360,7 @@ networks:
     name: inception
     driver: bridge
 
-# Named volumes stored where the subject wants them (/home/<login>/data).
+# Named volumes stored where the subject wants them (/home/bkaras-g/data).
 #   driver: local + type: none + o: bind  -> the "local" volume driver mounts
 #   an existing host folder (device). It is still a NAMED VOLUME managed by
 #   Docker (`docker volume ls/inspect` show it), not a bind mount written in a
@@ -396,7 +396,7 @@ secrets:
 ```
 Things to be able to explain:
 - `image: nginx:inception` next to `build:` names the built image after the service (subject rule). It does not pull anything.
-- `o: bind` is the local volume driver mounting a host folder; it is still a **Docker named volume** (shows in `docker volume ls`, and `docker volume inspect mariadb_data` shows the device path under `/home/<login>/data`). A `- /host/path:/ctr/path` line in a service would be a bind mount, which is forbidden here.
+- `o: bind` is the local volume driver mounting a host folder; it is still a **Docker named volume** (shows in `docker volume ls`, and `docker volume inspect mariadb_data` shows the device path under `/home/bkaras-g/data`). A `- /host/path:/ctr/path` line in a service would be a bind mount, which is forbidden here.
 - `restart: unless-stopped` satisfies "restart in case of a crash". It also brings the stack back after a VM reboot, because the Docker daemon starts at boot.
 - `${DATA_DIR}` and `${NGINX_PORT}` are read from `srcs/.env` (compose auto-loads the `.env` next to the yml for substitution); `env_file: .env` additionally injects every line into the containers.
 - Containers reach each other by service name (`mariadb`, `wordpress`) via Docker's DNS on the `inception` network.
@@ -1084,8 +1084,8 @@ Must build through compose and create the folders, secrets and `.env` it needs, 
 #   $(shell whoami)  run the `whoami` command and use what it prints
 LOGIN    ?= $(shell whoami)
 # Refuse to go on with a login that is not a plain lowercase name: `root`
-# (someone ran `sudo make`), or a placeholder such as "<login>", which the
-# shell would read as redirections in `rm -rf /home/<login>/data`.
+# (someone ran `sudo make`), or a placeholder such as "bkaras-g", which the
+# shell would read as redirections in `rm -rf /home/bkaras-g/data`.
 #   $(shell ... | grep -Ex ...)  prints the login back only if the whole of it
 #                                (-x) matches the pattern (-E: extended regex)
 #   ifeq (a,b) / ifneq (a,b)     true when a and b are equal / differ
@@ -1144,17 +1144,17 @@ secrets:
 	@chmod 600 secrets/*.txt
 
 # Create srcs/.env from the committed template if it does not exist yet (or is
-# empty), replacing every "<login>" with $(LOGIN) (sed: s/old/new/g = replace
+# empty), replacing every "bkaras-g" with $(LOGIN) (sed: s/old/new/g = replace
 # all). An existing, filled .env is never overwritten: your edits are kept.
 env:
-	@[ -s srcs/.env ] || sed 's/<login>/$(LOGIN)/g' srcs/.env.example > srcs/.env
+	@[ -s srcs/.env ] || sed 's/bkaras-g/$(LOGIN)/g' srcs/.env.example > srcs/.env
 
 # Host folders backing the two named volumes (they must exist before `up`).
 # -p: create parents too, no error if they already exist.
 dirs:
 	@mkdir -p $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 
-# Make <login>.42.fr point to this machine, only if the line is missing.
+# Make bkaras-g.42.fr point to this machine, only if the line is missing.
 #   grep -qw    quiet (-q: only the exit status matters, found / not found),
 #               whole word (-w: "xjdoe.42.fr" does not count as "jdoe.42.fr")
 #   sudo tee -a append as root (a plain `>>` would run without sudo rights)
@@ -1181,7 +1181,7 @@ re: fclean all
 # called "clean" or "secrets" exists. (`secrets` IS a folder, so this matters.)
 .PHONY: all up down stop start logs ps secrets env dirs hosts clean fclean re
 ```
-`LOGIN` defaults to your Unix user (`whoami`): on the VM your user is your 42 login. The Makefile stops with an error if the login is empty, `root` or not a plain lowercase name, so a placeholder like `<login>` can never reach `sudo rm -rf` (the shell would read `<login>` as redirections). `make env` also refills an *empty* `srcs/.env` (`-s` test).
+`LOGIN` defaults to your Unix user (`whoami`): on the VM your user is your 42 login. The Makefile stops with an error if the login is empty, `root` or not a plain lowercase name, so a placeholder like `bkaras-g` can never reach `sudo rm -rf` (the shell would read `bkaras-g` as redirections). `make env` also refills an *empty* `srcs/.env` (`-s` test).
 
 Mind: recipes need real TABs (check with `cat -A Makefile`: TABs show as `^I`). `make fclean` asks for sudo because files written by the containers belong to other users (mysql, www-data).
 
@@ -1193,7 +1193,7 @@ The repos in 0.2 converge on the same structure; sys-harmony and aziddineelm are
 
 ### README.md
 ```md
-*This project has been created as part of the 42 curriculum by <login>.*
+*This project has been created as part of the 42 curriculum by bkaras-g.*
 
 ## Description
 Goal, overview of the stack (NGINX :443 → php-fpm/WordPress :9000 → MariaDB :3306, one container each, one bridge network, two named volumes), what Docker is used for here, sources included in the repo.
@@ -1205,16 +1205,16 @@ Goal, overview of the stack (NGINX :443 → php-fpm/WordPress :9000 → MariaDB 
 4. Docker Volumes vs Bind Mounts: ...
 
 ## Instructions
-Prerequisites, `make`, how to reach https://<login>.42.fr, where the passwords are, how to stop/clean.
+Prerequisites, `make`, how to reach https://bkaras-g.42.fr, where the passwords are, how to stop/clean.
 
 ## Resources
 - Docs and articles actually read (Docker docs, NGINX docs, MariaDB docs, WordPress/WP-CLI docs, ...)
 - AI usage: which tasks (e.g. explaining PID 1, reviewing Dockerfiles, comparing repos), which parts of the project, what you verified yourself.
 ```
 ### USER_DOC.md
-Services provided; `make` / `make down` / `make stop` / `make start`; URLs (`https://<login>.42.fr`, `https://<login>.42.fr/wp-admin`); the browser warning about the self-signed certificate and how to accept it; where credentials live (`secrets/credentials.txt` line 1 = admin, line 2 = user; `secrets/db_*.txt`) and how to change them (edit the file, then `make fclean && make`, since passwords are only applied at first boot); checks (`make ps`, `curl -k https://<login>.42.fr`, `make logs`).
+Services provided; `make` / `make down` / `make stop` / `make start`; URLs (`https://bkaras-g.42.fr`, `https://bkaras-g.42.fr/wp-admin`); the browser warning about the self-signed certificate and how to accept it; where credentials live (`secrets/credentials.txt` line 1 = admin, line 2 = user; `secrets/db_*.txt`) and how to change them (edit the file, then `make fclean && make`, since passwords are only applied at first boot); checks (`make ps`, `curl -k https://bkaras-g.42.fr`, `make logs`).
 ### DEV_DOC.md
-Prerequisites (Docker, compose plugin, `/etc/hosts`, `/home/<login>/data`); config files (`srcs/.env` from `.env.example`, `secrets/`); build and launch (`make`, compose commands); manage containers/volumes (`docker exec -it mariadb sh`, `docker volume ls/inspect`, `docker compose logs`); data location (`/home/<login>/data/{mariadb,wordpress}`) and why it survives `down` and reboot; how to change a port (section 9.3).
+Prerequisites (Docker, compose plugin, `/etc/hosts`, `/home/bkaras-g/data`); config files (`srcs/.env` from `.env.example`, `secrets/`); build and launch (`make`, compose commands); manage containers/volumes (`docker exec -it mariadb sh`, `docker volume ls/inspect`, `docker compose logs`); data location (`/home/bkaras-g/data/{mariadb,wordpress}`) and why it survives `down` and reboot; how to change a port (section 9.3).
 
 ---
 
@@ -1222,7 +1222,7 @@ Prerequisites (Docker, compose plugin, `/etc/hosts`, `/home/<login>/data`); conf
 
 ### 9.1 What was tested on 2026-11-13 (with these exact files)
 
-Results, from an empty data folder, `<login>` = `ktest`:
+Results, from an empty data folder, `bkaras-g` = `ktest`:
 - `make secrets env dirs` then `docker compose up -d --build`: three images built, all three containers up, MariaDB and WordPress `healthy`.
 - PID 1 is `mariadbd`, `php-fpm: master process`, `nginx: master process nginx -g daemon off;`.
 - `https://ktest.42.fr` → 200 with the site title; `/wp-admin/` → redirect to the login page; a real admin login → dashboard 200; CSS served with the right type; `/.htaccess` → 403; a non-existent `.php` → 404.
@@ -1252,17 +1252,17 @@ docker network ls
 docker network inspect inception --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{println}}{{end}}'
 # Docker DNS: service names resolve to network IPs
 docker exec wordpress getent hosts mariadb
-# Volumes: device must contain /home/<login>/data
+# Volumes: device must contain /home/bkaras-g/data
 docker volume ls
 docker volume inspect mariadb_data wordpress_data
 # HTTPS works (-k: accept the self-signed certificate; -I: headers only)
-curl -k -I https://<login>.42.fr
+curl -k -I https://bkaras-g.42.fr
 # HTTP must fail: connection refused
-curl -I http://<login>.42.fr
+curl -I http://bkaras-g.42.fr
 # TLS 1.1 must fail, TLS 1.2 and 1.3 must succeed (look at the "Protocol" line)
-openssl s_client -connect <login>.42.fr:443 -tls1_1 </dev/null
-openssl s_client -connect <login>.42.fr:443 -tls1_2 </dev/null
-openssl s_client -connect <login>.42.fr:443 -tls1_3 </dev/null
+openssl s_client -connect bkaras-g.42.fr:443 -tls1_1 </dev/null
+openssl s_client -connect bkaras-g.42.fr:443 -tls1_2 </dev/null
+openssl s_client -connect bkaras-g.42.fr:443 -tls1_3 </dev/null
 # Log into the DB as root (password: secrets/db_root_password.txt), then:
 #   SHOW DATABASES; USE wordpress; SHOW TABLES; SELECT user_login FROM wp_users;
 docker exec -it mariadb mariadb -uroot -p
@@ -1292,7 +1292,7 @@ Example, NGINX to 8443:
 sed -i 's/^NGINX_PORT=.*/NGINX_PORT=8443/' srcs/.env   # or edit it with vim
 make                                                     # = docker compose up -d --build: recreates what changed, data kept
 docker compose -f srcs/docker-compose.yml ps             # nginx now shows 0.0.0.0:8443->8443/tcp
-curl -k -I https://<login>.42.fr:8443                    # 200; port 443 is now closed
+curl -k -I https://bkaras-g.42.fr:8443                    # 200; port 443 is now closed
 ```
 Do it once with a timer for each of the three variables, then put them back. Be ready to show *where* the variable ends up (`docker exec nginx grep listen /etc/nginx/nginx.conf`, `docker exec wordpress grep DB_HOST /var/www/html/wp-config.php`). If the evaluator insists on editing a config file rather than `.env`, you know which line in which file to change from the table. Do **not** use `make re` for this: it wipes the data. `EXPOSE` in the Dockerfiles stays at the default value; it is documentation only and does not affect anything.
 
@@ -1312,9 +1312,9 @@ Do it once with a timer for each of the three variables, then put them back. Be 
 | NGINX shows 404 / downloads PHP | NGINX must mount the same `wordpress_data` volume (read-only is fine) at the same path, and `SCRIPT_FILENAME` must resolve; `fastcgi_pass wordpress:<WP_PORT>`. |
 | NGINX restarts in a loop while WordPress is down | Expected: `nginx -t` fails when the host name `wordpress` does not resolve. It recovers by itself when WordPress is back. |
 | Permission errors on the volume | Host dirs exist before `up`; `chown` in the entrypoints (`mysql` for MariaDB, `www-data` for WordPress). |
-| Works once, breaks after `make re` | Init steps not guarded, or old data left in `/home/<login>/data` (use `make fclean` for a true clean slate). |
+| Works once, breaks after `make re` | Init steps not guarded, or old data left in `/home/bkaras-g/data` (use `make fclean` for a true clean slate). |
 | DB/password changes ignored after editing the entrypoint or a secret | The marker file skips init when the volume already has data. `make fclean && make`. |
-| Cert warning "bad domain" | `CN`, `subjectAltName` and `server_name` must equal `<login>.42.fr`. |
+| Cert warning "bad domain" | `CN`, `subjectAltName` and `server_name` must equal `bkaras-g.42.fr`. |
 | `.env` or secrets committed | `git rm --cached`, add to `.gitignore`; if already pushed, rotate and rewrite history. Instant 0 otherwise. |
 | MariaDB will not restart after a crash | Stale `mysqld.pid` / `mysqld.sock`: deleted at the start of the entrypoint. |
 | "Restart on crash" demo does nothing | `docker kill` / `docker stop` count as manual stops; the policy does not apply. Use `docker exec <c> kill 1`. |
@@ -1397,6 +1397,6 @@ Remember the tool for the question rather than every flag (from tigran's `EVALUA
 | Where is persistent data? | `docker volume inspect <v>` |
 | How are containers connected? | `docker network inspect inception` |
 | Does Docker DNS work? | `docker exec wordpress getent hosts mariadb` |
-| Does HTTPS work? | `curl -k -I https://<login>.42.fr` |
-| Which TLS version works? | `openssl s_client -connect <login>.42.fr:443 -tls1_2` |
+| Does HTTPS work? | `curl -k -I https://bkaras-g.42.fr` |
+| Which TLS version works? | `openssl s_client -connect bkaras-g.42.fr:443 -tls1_2` |
 | Does MariaDB contain data? | `mariadb` client + SQL |

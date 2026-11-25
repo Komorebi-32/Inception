@@ -1,16 +1,16 @@
 # User documentation
 
-How to run and use the Inception stack. Commands are run from the repository root, on the VM, as the user `<login>`.
+How to run and use the Inception stack. Commands are run from the repository root, on the VM, as the user `bkaras-g`.
 
 ## Services provided
 
 | Service | What it is | Reachable at |
 |---|---|---|
-| NGINX | The web server, HTTPS only (TLS 1.2 / 1.3) | `https://<login>.42.fr` (port 443) |
-| WordPress | The website and its administration panel | through NGINX: `https://<login>.42.fr`, `https://<login>.42.fr/wp-admin` |
+| NGINX | The web server, HTTPS only (TLS 1.2 / 1.3) | `https://bkaras-g.42.fr` (port 443) |
+| WordPress | The website and its administration panel | through NGINX: `https://bkaras-g.42.fr`, `https://bkaras-g.42.fr/wp-admin` |
 | MariaDB | The database used by WordPress | only from inside the Docker network (not published) |
 
-Plain HTTP (`http://<login>.42.fr`, port 80) is not served at all: the connection is refused.
+Plain HTTP (`http://bkaras-g.42.fr`, port 80) is not served at all: the connection is refused.
 
 ## Start and stop
 
@@ -26,9 +26,9 @@ The containers restart by themselves after a crash and when the VM boots.
 
 ## Access the website and the administration panel
 
-1. Open `https://<login>.42.fr` in the VM's browser.
+1. Open `https://bkaras-g.42.fr` in the VM's browser.
 2. The browser warns that the certificate is not trusted: it is self-signed (made by the project, not by a certificate authority). Click *Advanced* → *Accept the risk and continue*.
-3. Administration panel: `https://<login>.42.fr/wp-admin`, log in with the administrator account.
+3. Administration panel: `https://bkaras-g.42.fr/wp-admin`, log in with the administrator account.
 
 Two WordPress accounts exist:
 
@@ -56,8 +56,8 @@ The files in `secrets/` are created by `make` on this machine, readable only by 
 ```sh
 make ps                                  # the three containers are "Up"; mariadb and wordpress "(healthy)"
 make logs                                # live logs of the three services (Ctrl-C to quit)
-curl -k -I https://<login>.42.fr         # "HTTP/1.1 200 OK" (-k accepts the self-signed certificate)
-curl -I http://<login>.42.fr             # must fail: "Connection refused"
+curl -k -I https://bkaras-g.42.fr         # "HTTP/1.1 200 OK" (-k accepts the self-signed certificate)
+curl -I http://bkaras-g.42.fr             # must fail: "Connection refused"
 docker exec -it mariadb mariadb -uroot -p   # database console; password: secrets/db_root_password.txt
 ```
 

@@ -106,7 +106,7 @@ networks:
     name: inception
     driver: bridge
 
-# Named volumes stored where the subject wants them (/home/<login>/data).
+# Named volumes stored where the subject wants them (/home/bkaras-g/data).
 #   driver: local + type: none + o: bind  -> the "local" volume driver mounts
 #   an existing host folder (device). It is still a NAMED VOLUME managed by
 #   Docker (`docker volume ls/inspect` show it), not a bind mount written in a

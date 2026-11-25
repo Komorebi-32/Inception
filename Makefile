@@ -10,8 +10,8 @@
 #   $(shell whoami)  run the `whoami` command and use what it prints
 LOGIN    ?= $(shell whoami)
 # Refuse to go on with a login that is not a plain lowercase name: `root`
-# (someone ran `sudo make`), or a placeholder such as "<login>", which the
-# shell would read as redirections in `rm -rf /home/<login>/data`.
+# (someone ran `sudo make`), or a placeholder such as "bkaras-g", which the
+# shell would read as redirections in `rm -rf /home/bkaras-g/data`.
 #   $(shell ... | grep -Ex ...)  prints the login back only if the whole of it
 #                                (-x) matches the pattern (-E: extended regex)
 #   ifeq (a,b) / ifneq (a,b)     true when a and b are equal / differ
@@ -70,17 +70,17 @@ secrets:
 	@chmod 600 secrets/*.txt
 
 # Create srcs/.env from the committed template if it does not exist yet (or is
-# empty), replacing every "<login>" with $(LOGIN) (sed: s/old/new/g = replace
+# empty), replacing every "bkaras-g" with $(LOGIN) (sed: s/old/new/g = replace
 # all). An existing, filled .env is never overwritten: your edits are kept.
 env:
-	@[ -s srcs/.env ] || sed 's/<login>/$(LOGIN)/g' srcs/.env.example > srcs/.env
+	@[ -s srcs/.env ] || sed 's/bkaras-g/$(LOGIN)/g' srcs/.env.example > srcs/.env
 
 # Host folders backing the two named volumes (they must exist before `up`).
 # -p: create parents too, no error if they already exist.
 dirs:
 	@mkdir -p $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
 
-# Make <login>.42.fr point to this machine, only if the line is missing.
+# Make bkaras-g.42.fr point to this machine, only if the line is missing.
 #   grep -qw    quiet (-q: only the exit status matters, found / not found),
 #               whole word (-w: "xjdoe.42.fr" does not count as "jdoe.42.fr")
 #   sudo tee -a append as root (a plain `>>` would run without sudo rights)

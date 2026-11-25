@@ -179,7 +179,7 @@ Three containers on one private Docker network, only NGINX reachable from outsid
                           │                              │                              │
                           └──── volume: WP files ────────┘                         volume: DB files
 ```
-Both volumes physically live in `/home/<login>/data` on the host.
+Both volumes physically live in `/home/bkaras-g/data` on the host.
 
 ### 2.2 General rules (ch. III)
 - Work in a **VM**.
@@ -252,7 +252,7 @@ Expect to be asked to change something small live (e.g. change a port, add a use
 - VM with Debian/Ubuntu (check what your school allows), 2 CPU, 2–4 GB RAM, ~20 GB disk, shared clipboard / SSH from your host to work comfortably in VS Code.
 - Install Docker Engine + compose plugin (from Docker's official apt repo), add yourself to the `docker` group, `make`, `openssl`, `git`.
 - Add `127.0.0.1 login.42.fr` to `/etc/hosts`.
-- Create `/home/<login>/data/{mariadb,wordpress}`.
+- Create `/home/bkaras-g/data/{mariadb,wordpress}`.
 - `git init`, write `.gitignore` (`.env`, `secrets/`) and commit it **first**.
 
 ### 3.3 Order of work and hints per service

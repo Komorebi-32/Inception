@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by <login>.*
+*This project has been created as part of the 42 curriculum by bkaras-g.*
 
 # Inception
 
@@ -13,7 +13,7 @@ Inception sets up a small web infrastructure with Docker Compose, inside a virtu
                          └────┬────┘                 └──────────┬──────────┘             └────┬────┘
                               │ read-only                       │                             │
                               └──────── wordpress_data ─────────┘                       mariadb_data
-                                  /home/<login>/data/wordpress                    /home/<login>/data/mariadb
+                                  /home/bkaras-g/data/wordpress                    /home/bkaras-g/data/mariadb
 ```
 
 | Service | Image | Role |
@@ -40,20 +40,20 @@ Main choices:
 
 **Docker Network vs Host Network.** With `network: host` a container uses the VM's network directly: every port it opens is open on the VM, and there is no isolation between services. A user-defined bridge network is a private virtual network: containers on it reach each other by service name through Docker's internal DNS (`wordpress` resolves `mariadb`), and nothing is reachable from outside except the ports explicitly published. Only NGINX publishes a port (443).
 
-**Docker Volumes vs Bind Mounts.** A bind mount maps a host path into a container; Docker does not manage it and the container depends on the host's folder layout. A named volume is created and tracked by Docker (`docker volume ls`, `docker volume inspect`), survives the removal of containers and can be shared between them. The subject requires named volumes stored under `/home/<login>/data`: the volumes `mariadb_data` and `wordpress_data` use the `local` driver with `type: none, o: bind`, which keeps them Docker named volumes while storing their data in that folder.
+**Docker Volumes vs Bind Mounts.** A bind mount maps a host path into a container; Docker does not manage it and the container depends on the host's folder layout. A named volume is created and tracked by Docker (`docker volume ls`, `docker volume inspect`), survives the removal of containers and can be shared between them. The subject requires named volumes stored under `/home/bkaras-g/data`: the volumes `mariadb_data` and `wordpress_data` use the `local` driver with `type: none, o: bind`, which keeps them Docker named volumes while storing their data in that folder.
 
 ## Instructions
 
-**Prerequisites.** A Linux VM with Docker Engine, the Docker Compose plugin, `make`, `openssl` and `sudo` rights, logged in as the user `<login>` (the Makefile uses the current user name as login; override with `make LOGIN=<login>`).
+**Prerequisites.** A Linux VM with Docker Engine, the Docker Compose plugin, `make`, `openssl` and `sudo` rights, logged in as the user `bkaras-g` (the Makefile uses the current user name as login; override with `make LOGIN=bkaras-g`).
 
 **Build and start.**
 ```sh
 git clone <this repository> inception && cd inception
 make
 ```
-`make` creates the passwords in `secrets/`, `srcs/.env` from `srcs/.env.example`, the data folders `/home/<login>/data/{mariadb,wordpress}`, adds `127.0.0.1 <login>.42.fr` to `/etc/hosts` (asks for the sudo password once), then builds the three images and starts the containers. The first start takes about a minute (WordPress download and install).
+`make` creates the passwords in `secrets/`, `srcs/.env` from `srcs/.env.example`, the data folders `/home/bkaras-g/data/{mariadb,wordpress}`, adds `127.0.0.1 bkaras-g.42.fr` to `/etc/hosts` (asks for the sudo password once), then builds the three images and starts the containers. The first start takes about a minute (WordPress download and install).
 
-**Use.** Open `https://<login>.42.fr` and accept the self-signed certificate warning. Administration: `https://<login>.42.fr/wp-admin`. User names are in `srcs/.env` (`WP_ADMIN_USER`, `WP_USER`), passwords in `secrets/credentials.txt` (line 1: admin, line 2: author).
+**Use.** Open `https://bkaras-g.42.fr` and accept the self-signed certificate warning. Administration: `https://bkaras-g.42.fr/wp-admin`. User names are in `srcs/.env` (`WP_ADMIN_USER`, `WP_USER`), passwords in `secrets/credentials.txt` (line 1: admin, line 2: author).
 
 **Stop and clean.**
 
@@ -62,7 +62,7 @@ make
 | `make stop` / `make start` | Stop / restart the containers, nothing removed |
 | `make down` | Remove the containers and the network; data kept |
 | `make clean` | Also remove the images |
-| `make fclean` | Also remove the volumes, the data in `/home/<login>/data` and the Docker cache (asks for sudo) |
+| `make fclean` | Also remove the volumes, the data in `/home/bkaras-g/data` and the Docker cache (asks for sudo) |
 | `make re` | `fclean` then `make` |
 
 See [USER_DOC.md](USER_DOC.md) for day-to-day use and [DEV_DOC.md](DEV_DOC.md) for development details.
