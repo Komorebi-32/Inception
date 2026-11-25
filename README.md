@@ -40,7 +40,24 @@ Main choices:
 
 **Docker Network vs Host Network.** With `network: host` a container uses the VM's network directly: every port it opens is open on the VM, and there is no isolation between services. A user-defined bridge network is a private virtual network: containers on it reach each other by service name through Docker's internal DNS (`wordpress` resolves `mariadb`), and nothing is reachable from outside except the ports explicitly published. Only NGINX publishes a port (443).
 
-**Docker Volumes vs Bind Mounts.** A bind mount maps a host path into a container; Docker does not manage it and the container depends on the host's folder layout. A named volume is created and tracked by Docker (`docker volume ls`, `docker volume inspect`), survives the removal of containers and can be shared between them. The subject requires named volumes stored under `/home/bkaras-g/data`: the volumes `mariadb_data` and `wordpress_data` use the `local` driver with `type: none, o: bind`, which keeps them Docker named volumes while storing their data in that folder.
+**Docker Volumes vs Bind Mounts.** Both give a container a folder that lives outside its writable layer, so the data survives `docker rm`. They differ in who manages that folder.
+
+A bind mount is a Linux kernel feature (`mount --bind /a /b`): an existing directory becomes visible at a second path, the same files reached through two paths. In Docker the left side is a host path (`-v /home/bkaras-g/data/mariadb:/var/lib/mysql`); Docker only asks the kernel to bind it and owns nothing. A named volume is a Docker object with a name and a lifecycle (`-v mariadb_data:/var/lib/mysql`): Docker creates it, stores it where its driver decides (by default `/var/lib/docker/volumes/<name>/_data`) and manages it with `docker volume ls / inspect / rm`. Attaching it to a container is also a mount; the difference is ownership, not the kernel mechanism.
+
+| | Bind mount | Named volume |
+|---|---|---|
+| Left side of `-v` | a host path (`/home/...`, `./data`) | a name (`mariadb_data`) |
+| Who creates the folder | the user | Docker |
+| Where the data is | exactly the given path | where the driver decides (default: `/var/lib/docker/volumes/...`) |
+| Listed by `docker volume ls` | no | yes |
+| Removed by `docker compose down -v` / `docker volume prune` | never | yes |
+| First use on an empty folder | the container sees the empty host folder, which hides the image's content | Docker first copies the image's content at that path into the volume |
+| Drivers | none: always a local host path | `local` by default, or plugins (NFS, cloud storage...) |
+| Portability | depends on that path existing on the host | the compose file only needs a name |
+| Typical use | development (edit code on the host, see it live), config files | application data (databases, uploads) |
+| Security | can expose any host path, even `/` or the Docker socket | confined to Docker's area |
+
+The subject requires named volumes (bind mounts are not allowed for them) whose data is stored under `/home/bkaras-g/data`. A default named volume would store it in `/var/lib/docker/volumes/`. So `mariadb_data` and `wordpress_data` are real named volumes (they appear in `docker volume ls` and the services refer to them by name) whose `local` driver is configured with `type: none, o: bind, device: /home/bkaras-g/data/<service>`. The bind is only the driver's storage method. `docker volume inspect mariadb_data` shows both paths: `Mountpoint` is Docker's internal path, `Options.device` is the folder where the files really are.
 
 ## Instructions
 
