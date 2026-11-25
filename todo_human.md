@@ -13,42 +13,42 @@ The project files are written (Makefile, `srcs/`, README, USER_DOC, DEV_DOC) and
 
 ## 2. Create the VM (VirtualBox, at school)
 
-- [ ] Download the Debian 12 "bookworm" netinst ISO (amd64): the "bookworm" page on https://www.debian.org/releases/ links to the installer. Bookworm is the right choice **today** because Debian 13 "trixie" is the current stable. Re-check https://www.debian.org/releases/ the day you build.
-- [ ] Store the VM where the quota allows it: `/sgoinfre/goinfre/Perso/<login>` (30 GB limit; check with `du -sh /sgoinfre/goinfre/Perso/<login>`).
-- [ ] New VM: type Linux / Debian 64-bit, 2 CPUs (more if available), 4096 MB RAM, dynamically allocated disk of 20 GB, network "NAT".
-- [ ] VirtualBox → VM settings → Network → Advanced → Port Forwarding: add a rule `ssh`, host port `4242`, guest port `22` (for SSH from the host, like Born2beRoot).
+- [x] Download the Debian 12 "bookworm" netinst ISO (amd64): the "bookworm" page on https://www.debian.org/releases/ links to the installer. Bookworm is the right choice **today** because Debian 13 "trixie" is the current stable. Re-check https://www.debian.org/releases/ the day you build.
+- [x] Store the VM where the quota allows it: `/sgoinfre/goinfre/Perso/<login>` (30 GB limit; check with `du -sh /sgoinfre/goinfre/Perso/<login>`).
+- [x] New VM: type Linux / Debian 64-bit, 2 CPUs (more if available), 4096 MB RAM, dynamically allocated disk of 20 GB, network "NAT".
+- [x] VirtualBox → VM settings → Network → Advanced → Port Forwarding: add a rule `ssh`, host port `4242`, guest port `22` (for SSH from the host, like Born2beRoot).
   - Check: the VM boots on the ISO.
 
 ## 3. Install Debian in the VM
 
-- [ ] Language English, your keyboard layout, hostname `<login>` (anything works, your login is simplest).
-- [ ] Set a root password, then create the normal user: **user name = your 42 login, exactly** (lowercase). The Makefile takes the login from `whoami`, so this decides the domain `<login>.42.fr` and the data path `/home/<login>/data`.
-- [ ] Partitioning: "Guided - use entire disk", all files in one partition.
-- [ ] Software selection: tick **Xfce** (a desktop with a browser is needed: the evaluator opens the site in the VM's browser, and `<login>.42.fr` only exists in the VM's `/etc/hosts`), **SSH server** and **standard system utilities**. Untick GNOME and "web server".
-- [ ] Install GRUB on the disk, reboot, remove the ISO.
+- [x] Language English, your keyboard layout, hostname `<login>` (anything works, your login is simplest).
+- [x] Set a root password, then create the normal user: **user name = your 42 login, exactly** (lowercase). The Makefile takes the login from `whoami`, so this decides the domain `<login>.42.fr` and the data path `/home/<login>/data`.
+- [x] Partitioning: "Guided - use entire disk", all files in one partition.
+- [x] Software selection: tick **Xfce** (a desktop with a browser is needed: the evaluator opens the site in the VM's browser, and `<login>.42.fr` only exists in the VM's `/etc/hosts`), **SSH server** and **standard system utilities**. Untick GNOME and "web server".
+- [x] Install GRUB on the disk, reboot, remove the ISO.
   - Check: you can log into the Xfce desktop as `<login>`.
 
 ## 4. First configuration of the VM
 
 In a terminal of the VM:
-- [ ] `su -` (root password), then `apt update && apt install -y sudo vim make git curl openssl ca-certificates`.
-- [ ] `usermod -aG sudo <login>`, then `exit` twice and log in again.
+- [x] `su -` (root password), then `apt update && apt install -y sudo vim make git curl openssl ca-certificates`.
+- [x] `usermod -aG sudo <login>`, then `exit` twice and log in again.
   - Check: `sudo whoami` prints `root`.
-- [ ] `sudo apt install -y firefox-esr` if Firefox is not already there.
-- [ ] Optional but recommended: from the host, `ssh -p 4242 <login>@localhost` works (copy-paste is easier); VS Code "Remote - SSH" on the same address lets you edit files in the VM.
-- [ ] Optional: in `/etc/ssh/sshd_config`, `PermitRootLogin no`, then `sudo systemctl restart ssh` (same as Born2beRoot).
+- [x] `sudo apt install -y firefox-esr` if Firefox is not already there.
+- [x] Optional but recommended: from the host, `ssh -p 4242 <login>@localhost` works (copy-paste is easier); VS Code "Remote - SSH" on the same address lets you edit files in the VM.
+- [x] Optional: in `/etc/ssh/sshd_config`, `PermitRootLogin no`, then `sudo systemctl restart ssh` (same as Born2beRoot).
 
 ## 5. Install Docker in the VM
 
-- [ ] Run the commands of §4.2 (Docker's Debian repository, **`linux/debian`**, not `linux/ubuntu`).
-- [ ] `sudo usermod -aG docker <login>`, then log out of the desktop and log in again (or `newgrp docker` in the current terminal).
+- [x] Run the commands of §4.2 of `cooking_recipe.md` ("Docker install": Docker's Debian repository, **`linux/debian`**, not `linux/ubuntu`).
+- [x] `sudo usermod -aG docker <login>`, then log out of the desktop and log in again (or `newgrp docker` in the current terminal).
   - Check: `docker run --rm debian:bookworm echo ok` prints `ok` **without** sudo, and `docker compose version` prints v2 or later.
-- [ ] Take a VirtualBox snapshot now ("Docker installed"): you can come back to it if anything breaks later.
+- [x] Take a VirtualBox snapshot now ("Docker installed"): you can come back to it if anything breaks later.
 
 ## 6. Get the project into the VM
 
-- [ ] `git clone https://github.com/Komorebi-32/Inception.git ~/inception && cd ~/inception`. If the repo is private, use a GitHub personal access token as the password, or add an SSH key to GitHub.
-- [ ] Check the login the Makefile will use: `whoami` must print your 42 login. If it does not, either fix the user or always run `make LOGIN=<login>`.
+- [x] `git clone https://github.com/Komorebi-32/Inception.git ~/inception && cd ~/inception`. If the repo is private, use a GitHub personal access token as the password, or add an SSH key to GitHub.
+- [x] Check the login the Makefile will use: `whoami` must print your 42 login. If it does not, either fix the user or always run `make LOGIN=<login>`.
 - [ ] Put your login in the docs (the README's first line must contain it):
   ```sh
   sed -i 's/<login>/YOUR_LOGIN/g' README.md USER_DOC.md DEV_DOC.md
